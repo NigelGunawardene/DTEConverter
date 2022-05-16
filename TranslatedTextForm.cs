@@ -12,19 +12,22 @@ namespace DTEConverter
 {
     public partial class TranslatedTextForm : Form
     {
+
+        private string oneLineSpace = "\n";
+        private string twoLineSpaces = "\n\n";
         public TranslatedTextForm(List<string> dutchPhrases, List<string> engPhrases)
         {
             InitializeComponent();
             foreach (var phrase in dutchPhrases)
             {
                 DutchTextBox.Text += phrase;
-                DutchTextBox.Text += "\n\n";
+                DutchTextBox.Text += oneLineSpace;
             }
 
             foreach (var phrase in engPhrases)
             {
                 EnglishTextBox.Text += phrase;
-                EnglishTextBox.Text += "\n\n";
+                EnglishTextBox.Text += oneLineSpace;
             }
         }
 

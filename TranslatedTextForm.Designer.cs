@@ -37,7 +37,7 @@
             // 
             // CloseButton
             // 
-            this.CloseButton.Location = new System.Drawing.Point(713, 406);
+            this.CloseButton.Location = new System.Drawing.Point(273, 393);
             this.CloseButton.Name = "CloseButton";
             this.CloseButton.Size = new System.Drawing.Size(75, 23);
             this.CloseButton.TabIndex = 0;
@@ -47,9 +47,9 @@
             // 
             // EnglishTextBox
             // 
-            this.EnglishTextBox.Location = new System.Drawing.Point(414, 37);
+            this.EnglishTextBox.Location = new System.Drawing.Point(190, 37);
             this.EnglishTextBox.Name = "EnglishTextBox";
-            this.EnglishTextBox.Size = new System.Drawing.Size(374, 350);
+            this.EnglishTextBox.Size = new System.Drawing.Size(158, 350);
             this.EnglishTextBox.TabIndex = 1;
             this.EnglishTextBox.Text = "";
             // 
@@ -57,7 +57,7 @@
             // 
             this.DutchTextBox.Location = new System.Drawing.Point(12, 37);
             this.DutchTextBox.Name = "DutchTextBox";
-            this.DutchTextBox.Size = new System.Drawing.Size(374, 350);
+            this.DutchTextBox.Size = new System.Drawing.Size(158, 350);
             this.DutchTextBox.TabIndex = 2;
             this.DutchTextBox.Text = "";
             // 
@@ -73,7 +73,7 @@
             // EnglishLabel
             // 
             this.EnglishLabel.AutoSize = true;
-            this.EnglishLabel.Location = new System.Drawing.Point(414, 19);
+            this.EnglishLabel.Location = new System.Drawing.Point(190, 19);
             this.EnglishLabel.Name = "EnglishLabel";
             this.EnglishLabel.Size = new System.Drawing.Size(48, 15);
             this.EnglishLabel.TabIndex = 4;
@@ -83,7 +83,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(374, 426);
             this.Controls.Add(this.EnglishLabel);
             this.Controls.Add(this.DutchLabel);
             this.Controls.Add(this.DutchTextBox);
