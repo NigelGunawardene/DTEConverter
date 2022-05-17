@@ -4,12 +4,12 @@
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>netcoreapp3.1</TargetFramework>
 		<UseWindowsForms>true</UseWindowsForms>
-		<Platforms>AnyCPU;x86</Platforms>
+		<Platforms>x86</Platforms>
 		<ApplicationIcon>Resources\dte.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Content Include="Resources\dte.ico" />
+		<Content Include="Resources\dte.ico" />
 	</ItemGroup>
 	<ItemGroup>
 		<EmbeddedResource Include="Resources\dte.ico" />
