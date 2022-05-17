@@ -9,7 +9,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Humanizer;
-using tessnet2;
+using Tesseract;
 
 namespace DTEConverter
 {
@@ -27,12 +27,10 @@ namespace DTEConverter
 
     internal partial class DTEContext : ApplicationContext
     {
+        private static string tesseractFiles = "C:\\tessFiles\\tesseract";
+        private static string tesseractEnglish = "eng";
+        private static string tesseractDutch = "nld";
 
-        // create one reader only
-        tessnet2.Tesseract ocr = CreateTessNetOcrReader();
-
-        private static string tessnetFiles = "C:\\tessNetFiles\\nldtessdata";
-        private static string tessnetLanguage = "nld";
         private NotifyIcon _notifyIcon;
         private List<string> engPhrasesList = new List<string>();
         private List<string> dutchPhraseList = new List<string>();
@@ -72,7 +70,6 @@ namespace DTEConverter
             #endregion
         }
 
-        // not fully implemented
         private void TranslateImage(object sender, EventArgs e)
         {
             ClearPhraseLists();
@@ -90,11 +87,13 @@ namespace DTEConverter
             var snip = SnippingTool.Snip();
             if (snip != null)
             {
-                var filePath = "C:\\tessNetFiles\\snip.Jpg";
+                var filePath = "C:\\tessFiles\\snip.Jpg";
                 try
                 {
-                    snip.Save(filePath, ImageFormat.Jpeg);
+                    snip.Save(filePath, System.Drawing.Imaging.ImageFormat.Jpeg);
                     ExecuteReadAndTranslateFunctions(filePath);
+                    snip.Dispose();
+                    GC.Collect();
                 }
                 catch (Exception ex)
                 {
@@ -105,25 +104,34 @@ namespace DTEConverter
 
         private void ExecuteReadAndTranslateFunctions(string filePath)
         {
-            TessNet2Reader(filePath);
+            TesseractReader(filePath);
             TranslateDutchListToEnglish();
             ShowTranslatedText();
         }
 
-        private void TessNet2Reader(string filePath)
+
+        // References - 
+        // https://github.com/charlesw/tesseract
+        // https://github.com/charlesw/tesseract-samples
+        private void TesseractReader(string filePath)
         {
             try
             {
-                Bitmap image = new Bitmap(filePath);
-                var result = ocr.DoOCR(image, Rectangle.Empty);
-                result.ForEach(x =>
+                using (TesseractEngine ocr = new TesseractEngine(tesseractFiles, tesseractDutch, EngineMode.Default))
                 {
-                    dutchPhraseList.Add(x.Text.Humanize());
-                });
-                //    foreach (tessnet2.Word word in result)
-                //        Console.WriteLine("{0} : {1}", word.Confidence, word.Text);
+                    Bitmap image = new Bitmap(filePath);
+                    var result = ocr.Process(image);
 
-                //    Console.ReadLine();
+                    var meanConfidence = result.GetMeanConfidence();
+                    var resultText = result.GetText().Humanize();
+
+                    dutchPhraseList.Add(resultText);
+                    // use this if we want to split the sentence.
+                    //resultText.Split(null).ToList().ForEach(word =>
+                    //{
+                    //    dutchPhraseList.Add(word);
+                    //});
+                }
             }
             catch (Exception exception)
             {
@@ -195,11 +203,5 @@ namespace DTEConverter
             Application.Exit();
         }
 
-        private static tessnet2.Tesseract CreateTessNetOcrReader()
-        {
-            var ocr = new tessnet2.Tesseract();
-            ocr.Init(tessnetFiles, tessnetLanguage, false);
-            return ocr;
-        }
     }
 }
