@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Windows.Forms;
 
 namespace DTEConverter
@@ -7,95 +8,243 @@ namespace DTEConverter
 
     internal partial class DTEContext
     {
-        public partial class SnippingTool : Form
+        public sealed partial class SnippingTool : Form
         {
-            public static Image Snip()
+            public static event EventHandler Cancel;
+            public static event EventHandler AreaSelected;
+            public static Image Image { get; set; }
+
+            private static SnippingTool[] _forms;
+            private Rectangle _rectSelection;
+            private Point _pointStart;
+
+            public SnippingTool(Image screenShot, int x, int y, int width, int height)
             {
-                var screenDetails = Screen.PrimaryScreen.Bounds;
-                using (Bitmap bitmap = new Bitmap(screenDetails.Width, screenDetails.Height, System.Drawing.Imaging.PixelFormat.Format32bppPArgb))
+                //InitializeComponent();
+                BackgroundImage = screenShot;
+                BackgroundImageLayout = ImageLayout.Stretch;
+                ShowInTaskbar = false;
+                FormBorderStyle = FormBorderStyle.None;
+                StartPosition = FormStartPosition.Manual;
+                SetBounds(x, y, width, height);
+                WindowState = FormWindowState.Maximized;
+                DoubleBuffered = true;
+                Cursor = Cursors.Cross;
+                TopMost = true;
+            }
+
+            private void OnCancel(EventArgs e)
+            {
+                Cancel?.Invoke(this, e);
+            }
+
+            private void OnAreaSelected(EventArgs e)
+            {
+                AreaSelected?.Invoke(this, e);
+            }
+
+            private void CloseForms()
+            {
+                for (int i = 0; i < _forms.Length; i++)
                 {
-                    using (Graphics graphics = Graphics.FromImage(bitmap))
-                        graphics.CopyFromScreen(0, 0, 0, 0, bitmap.Size);
-                    using (var snipper = new SnippingTool(bitmap))
-                    {
-                        if (snipper.ShowDialog() == DialogResult.OK)
-                        {
-                            return snipper.Image;
-                        }
-                    }
-                    return null;
+                    _forms[i].Dispose();
                 }
             }
 
-            public SnippingTool(Image screenShot)
+            public static void Snip()
             {
-                //InitializeComponent();
-                this.BackgroundImage = screenShot;
-                this.ShowInTaskbar = false;
-                this.FormBorderStyle = FormBorderStyle.None;
-                this.WindowState = FormWindowState.Maximized;
-                this.DoubleBuffered = true;
+                var screens = ScreenHelper.GetMonitorsInfo();
+                _forms = new SnippingTool[screens.Count];
+                for (int i = 0; i < screens.Count; i++)
+                {
+                    int hRes = screens[i].HorizontalResolution;
+                    int vRes = screens[i].VerticalResolution;
+                    int top = screens[i].MonitorArea.Top;
+                    int left = screens[i].MonitorArea.Left;
+                    var bmp = new Bitmap(hRes, vRes, PixelFormat.Format32bppPArgb);
+                    using (var g = Graphics.FromImage(bmp))
+                    {
+                        g.CopyFromScreen(left, top, 0, 0, bmp.Size);
+                    }
+                    _forms[i] = new SnippingTool(bmp, left, top, hRes, vRes);
+                    _forms[i].Show();
+                }
             }
-            public Image Image { get; set; }
 
-            private Rectangle rcSelect = new Rectangle();
-            private Point pntStart;
-
+            #region Overrides
             protected override void OnMouseDown(MouseEventArgs e)
             {
                 // Start the snip on mouse down
-                if (e.Button != MouseButtons.Left) return;
-                pntStart = e.Location;
-                rcSelect = new Rectangle(e.Location, new Size(0, 0));
-                this.Invalidate();
+                if (e.Button != MouseButtons.Left)
+                {
+                    return;
+                }
+                _pointStart = e.Location;
+                _rectSelection = new Rectangle(e.Location, new Size(0, 0));
+                Invalidate();
             }
+
             protected override void OnMouseMove(MouseEventArgs e)
             {
                 // Modify the selection on mouse move
-                if (e.Button != MouseButtons.Left) return;
-                int x1 = Math.Min(e.X, pntStart.X);
-                int y1 = Math.Min(e.Y, pntStart.Y);
-                int x2 = Math.Max(e.X, pntStart.X);
-                int y2 = Math.Max(e.Y, pntStart.Y);
-                rcSelect = new Rectangle(x1, y1, x2 - x1, y2 - y1);
-                this.Invalidate();
+                if (e.Button != MouseButtons.Left)
+                {
+                    return;
+                }
+                int x1 = Math.Min(e.X, _pointStart.X);
+                int y1 = Math.Min(e.Y, _pointStart.Y);
+                int x2 = Math.Max(e.X, _pointStart.X);
+                int y2 = Math.Max(e.Y, _pointStart.Y);
+                _rectSelection = new Rectangle(x1, y1, x2 - x1, y2 - y1);
+                Invalidate();
             }
+
             protected override void OnMouseUp(MouseEventArgs e)
             {
                 // Complete the snip on mouse-up
-                if (rcSelect.Width <= 0 || rcSelect.Height <= 0) return;
-                Image = new Bitmap(rcSelect.Width, rcSelect.Height);
-                using (Graphics graphics = Graphics.FromImage(Image))
+                if (_rectSelection.Width <= 0 || _rectSelection.Height <= 0)
                 {
-                    graphics.DrawImage(this.BackgroundImage, new Rectangle(0, 0, Image.Width, Image.Height),
-                        rcSelect, GraphicsUnit.Pixel);
+                    CloseForms();
+                    OnCancel(new EventArgs());
+                    return;
                 }
-                DialogResult = DialogResult.OK;
+                Image = new Bitmap(_rectSelection.Width, _rectSelection.Height);
+                var hScale = BackgroundImage.Width / (double)Width;
+                var vScale = BackgroundImage.Height / (double)Height;
+                using (Graphics gr = Graphics.FromImage(Image))
+                {
+
+                    gr.DrawImage(BackgroundImage,
+                        new Rectangle(0, 0, Image.Width, Image.Height),
+                        new Rectangle((int)(_rectSelection.X * hScale), (int)(_rectSelection.Y * vScale), (int)(_rectSelection.Width * hScale), (int)(_rectSelection.Height * vScale)),
+                        GraphicsUnit.Pixel);
+                }
+                CloseForms();
+                OnAreaSelected(new EventArgs());
             }
+
             protected override void OnPaint(PaintEventArgs e)
             {
                 // Draw the current selection
                 using (Brush br = new SolidBrush(Color.FromArgb(120, Color.White)))
                 {
-                    int x1 = rcSelect.X; int x2 = rcSelect.X + rcSelect.Width;
-                    int y1 = rcSelect.Y; int y2 = rcSelect.Y + rcSelect.Height;
-                    e.Graphics.FillRectangle(br, new Rectangle(0, 0, x1, this.Height));
-                    e.Graphics.FillRectangle(br, new Rectangle(x2, 0, this.Width - x2, this.Height));
+                    int x1 = _rectSelection.X;
+                    int x2 = _rectSelection.X + _rectSelection.Width;
+                    int y1 = _rectSelection.Y;
+                    int y2 = _rectSelection.Y + _rectSelection.Height;
+                    e.Graphics.FillRectangle(br, new Rectangle(0, 0, x1, Height));
+                    e.Graphics.FillRectangle(br, new Rectangle(x2, 0, Width - x2, Height));
                     e.Graphics.FillRectangle(br, new Rectangle(x1, 0, x2 - x1, y1));
-                    e.Graphics.FillRectangle(br, new Rectangle(x1, y2, x2 - x1, this.Height - y2));
+                    e.Graphics.FillRectangle(br, new Rectangle(x1, y2, x2 - x1, Height - y2));
                 }
-                using (Pen pen = new Pen(Color.Red, 3))
+                using (Pen pen = new Pen(Color.Red, 2))
                 {
-                    e.Graphics.DrawRectangle(pen, rcSelect);
+                    e.Graphics.DrawRectangle(pen, _rectSelection);
                 }
             }
+
             protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
             {
                 // Allow canceling the snip with the Escape key
-                if (keyData == Keys.Escape) this.DialogResult = DialogResult.Cancel;
+                if (keyData == Keys.Escape)
+                {
+                    Image = null;
+                    CloseForms();
+                    OnCancel(new EventArgs());
+                }
                 return base.ProcessCmdKey(ref msg, keyData);
             }
+            #endregion
         }
+        //public partial class SnippingTool : Form
+        //{
+        //    public static Image Snip()
+        //    {
+        //        var screenDetails = Screen.PrimaryScreen.Bounds;
+        //        using (Bitmap bitmap = new Bitmap(screenDetails.Width, screenDetails.Height, System.Drawing.Imaging.PixelFormat.Format32bppPArgb))
+        //        {
+        //            using (Graphics graphics = Graphics.FromImage(bitmap))
+        //                graphics.CopyFromScreen(0, 0, 0, 0, bitmap.Size);
+        //            using (var snipper = new SnippingTool(bitmap))
+        //            {
+        //                if (snipper.ShowDialog() == DialogResult.OK)
+        //                {
+        //                    return snipper.Image;
+        //                }
+        //            }
+        //            return null;
+        //        }
+        //    }
+
+        //    public SnippingTool(Image screenShot)
+        //    {
+        //        //InitializeComponent();
+        //        this.BackgroundImage = screenShot;
+        //        this.ShowInTaskbar = false;
+        //        this.FormBorderStyle = FormBorderStyle.None;
+        //        this.WindowState = FormWindowState.Maximized;
+        //        this.DoubleBuffered = true;
+        //    }
+        //    public Image Image { get; set; }
+
+        //    private Rectangle rcSelect = new Rectangle();
+        //    private Point pntStart;
+
+        //    protected override void OnMouseDown(MouseEventArgs e)
+        //    {
+        //        // Start the snip on mouse down
+        //        if (e.Button != MouseButtons.Left) return;
+        //        pntStart = e.Location;
+        //        rcSelect = new Rectangle(e.Location, new Size(0, 0));
+        //        this.Invalidate();
+        //    }
+        //    protected override void OnMouseMove(MouseEventArgs e)
+        //    {
+        //        // Modify the selection on mouse move
+        //        if (e.Button != MouseButtons.Left) return;
+        //        int x1 = Math.Min(e.X, pntStart.X);
+        //        int y1 = Math.Min(e.Y, pntStart.Y);
+        //        int x2 = Math.Max(e.X, pntStart.X);
+        //        int y2 = Math.Max(e.Y, pntStart.Y);
+        //        rcSelect = new Rectangle(x1, y1, x2 - x1, y2 - y1);
+        //        this.Invalidate();
+        //    }
+        //    protected override void OnMouseUp(MouseEventArgs e)
+        //    {
+        //        // Complete the snip on mouse-up
+        //        if (rcSelect.Width <= 0 || rcSelect.Height <= 0) return;
+        //        Image = new Bitmap(rcSelect.Width, rcSelect.Height);
+        //        using (Graphics graphics = Graphics.FromImage(Image))
+        //        {
+        //            graphics.DrawImage(this.BackgroundImage, new Rectangle(0, 0, Image.Width, Image.Height),
+        //                rcSelect, GraphicsUnit.Pixel);
+        //        }
+        //        DialogResult = DialogResult.OK;
+        //    }
+        //    protected override void OnPaint(PaintEventArgs e)
+        //    {
+        //        // Draw the current selection
+        //        using (Brush br = new SolidBrush(Color.FromArgb(120, Color.White)))
+        //        {
+        //            int x1 = rcSelect.X; int x2 = rcSelect.X + rcSelect.Width;
+        //            int y1 = rcSelect.Y; int y2 = rcSelect.Y + rcSelect.Height;
+        //            e.Graphics.FillRectangle(br, new Rectangle(0, 0, x1, this.Height));
+        //            e.Graphics.FillRectangle(br, new Rectangle(x2, 0, this.Width - x2, this.Height));
+        //            e.Graphics.FillRectangle(br, new Rectangle(x1, 0, x2 - x1, y1));
+        //            e.Graphics.FillRectangle(br, new Rectangle(x1, y2, x2 - x1, this.Height - y2));
+        //        }
+        //        using (Pen pen = new Pen(Color.Red, 3))
+        //        {
+        //            e.Graphics.DrawRectangle(pen, rcSelect);
+        //        }
+        //    }
+        //    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        //    {
+        //        // Allow canceling the snip with the Escape key
+        //        if (keyData == Keys.Escape) this.DialogResult = DialogResult.Cancel;
+        //        return base.ProcessCmdKey(ref msg, keyData);
+        //    }
+        //}
     }
 }
 
