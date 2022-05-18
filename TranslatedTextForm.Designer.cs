@@ -29,10 +29,10 @@
         private void InitializeComponent()
         {
             this.CloseButton = new System.Windows.Forms.Button();
-            this.EnglishTextBox = new System.Windows.Forms.RichTextBox();
-            this.DutchTextBox = new System.Windows.Forms.RichTextBox();
             this.DutchLabel = new System.Windows.Forms.Label();
             this.EnglishLabel = new System.Windows.Forms.Label();
+            this.DutchTextBox = new DTEConverter.SynchronizedScrollRichTextBox();
+            this.EnglishTextBox = new DTEConverter.SynchronizedScrollRichTextBox();
             this.SuspendLayout();
             // 
             // CloseButton
@@ -44,22 +44,6 @@
             this.CloseButton.Text = "Close";
             this.CloseButton.UseVisualStyleBackColor = true;
             this.CloseButton.Click += new System.EventHandler(this.CloseButton_Click);
-            // 
-            // EnglishTextBox
-            // 
-            this.EnglishTextBox.Location = new System.Drawing.Point(190, 37);
-            this.EnglishTextBox.Name = "EnglishTextBox";
-            this.EnglishTextBox.Size = new System.Drawing.Size(158, 350);
-            this.EnglishTextBox.TabIndex = 1;
-            this.EnglishTextBox.Text = "";
-            // 
-            // DutchTextBox
-            // 
-            this.DutchTextBox.Location = new System.Drawing.Point(12, 37);
-            this.DutchTextBox.Name = "DutchTextBox";
-            this.DutchTextBox.Size = new System.Drawing.Size(158, 350);
-            this.DutchTextBox.TabIndex = 2;
-            this.DutchTextBox.Text = "";
             // 
             // DutchLabel
             // 
@@ -79,15 +63,31 @@
             this.EnglishLabel.TabIndex = 4;
             this.EnglishLabel.Text = "English:";
             // 
+            // DutchTextBox
+            // 
+            this.DutchTextBox.Location = new System.Drawing.Point(12, 37);
+            this.DutchTextBox.Name = "DutchTextBox";
+            this.DutchTextBox.Size = new System.Drawing.Size(158, 336);
+            this.DutchTextBox.TabIndex = 5;
+            this.DutchTextBox.Text = "";
+            // 
+            // EnglishTextBox
+            // 
+            this.EnglishTextBox.Location = new System.Drawing.Point(190, 37);
+            this.EnglishTextBox.Name = "EnglishTextBox";
+            this.EnglishTextBox.Size = new System.Drawing.Size(158, 336);
+            this.EnglishTextBox.TabIndex = 6;
+            this.EnglishTextBox.Text = "";
+            // 
             // TranslatedTextForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(374, 426);
+            this.Controls.Add(this.EnglishTextBox);
+            this.Controls.Add(this.DutchTextBox);
             this.Controls.Add(this.EnglishLabel);
             this.Controls.Add(this.DutchLabel);
-            this.Controls.Add(this.DutchTextBox);
-            this.Controls.Add(this.EnglishTextBox);
             this.Controls.Add(this.CloseButton);
             this.Name = "TranslatedTextForm";
             this.Text = "Translate Dutch To English";
@@ -100,9 +100,9 @@
         #endregion
 
         private System.Windows.Forms.Button CloseButton;
-        private System.Windows.Forms.RichTextBox EnglishTextBox;
-        private System.Windows.Forms.RichTextBox DutchTextBox;
         private System.Windows.Forms.Label DutchLabel;
         private System.Windows.Forms.Label EnglishLabel;
+        private SynchronizedScrollRichTextBox DutchTextBox;
+        private SynchronizedScrollRichTextBox EnglishTextBox;
     }
 }
