@@ -89,7 +89,7 @@ namespace DTEConverter
                     e.Graphics.DrawRectangle(pen, rcSelect);
                 }
             }
-            protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+            protected override bool ProcessCmdKey(ref System.Windows.Forms.Message msg, Keys keyData)
             {
                 // Allow canceling the snip with the Escape key
                 if (keyData == Keys.Escape) this.DialogResult = DialogResult.Cancel;
