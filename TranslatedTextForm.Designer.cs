@@ -70,6 +70,7 @@
             this.DutchTextBox.Size = new System.Drawing.Size(158, 336);
             this.DutchTextBox.TabIndex = 5;
             this.DutchTextBox.Text = "";
+            this.DutchTextBox.VScroll += new System.EventHandler(this.DutchTextBox_VScroll);
             // 
             // EnglishTextBox
             // 
@@ -78,6 +79,7 @@
             this.EnglishTextBox.Size = new System.Drawing.Size(158, 336);
             this.EnglishTextBox.TabIndex = 6;
             this.EnglishTextBox.Text = "";
+            this.EnglishTextBox.VScroll += new System.EventHandler(this.EnglishTextBox_VScroll);
             // 
             // TranslatedTextForm
             // 
