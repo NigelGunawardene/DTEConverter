@@ -171,27 +171,6 @@ namespace DTEConverter
             }
         }
 
-        //private string TranslateDutchToEnglish(string sentence)
-        //{
-        //    try
-        //    {
-        //        var toLanguage = "en";//English
-        //        var fromLanguage = "nl";//Dutch
-        //        var url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl={fromLanguage}&tl={toLanguage}&dt=t&q={System.Web.HttpUtility.UrlEncode(sentence)}";
-        //        var webClient = new WebClient
-        //        {
-        //            Encoding = System.Text.Encoding.UTF8
-        //        };
-        //        var result = webClient.DownloadString(url);
-        //        result = result.Substring(4, result.IndexOf("\"", 4, StringComparison.Ordinal) - 4);
-        //        return result;
-        //    }
-        //    catch
-        //    {
-        //        return "An error occured with translation, please make sure you have an internet connection";
-        //    }
-        //}
-
         private void TranslateDutchListToEnglish()
         {
             try
