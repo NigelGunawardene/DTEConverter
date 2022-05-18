@@ -30,6 +30,7 @@ namespace DTEConverter
         private static string tesseractFiles = "C:\\tessFiles\\tesseract";
         private static string tesseractEnglish = "eng";
         private static string tesseractDutch = "nld";
+        private static Mode appMode = Mode.PHRASE;
 
         private NotifyIcon _notifyIcon;
         private List<string> engPhrasesList = new List<string>();
@@ -44,6 +45,7 @@ namespace DTEConverter
             #region Create Menu Items
             var translateImage = new ToolStripMenuItem("Select Picture", null, TranslateImage);
             var translateSnip = new ToolStripMenuItem("Snip", null, TranslateSnip);
+            var translateSnipSingleWordMode = new ToolStripMenuItem("Snip - words", null, TranslateSnipSingleWordMode);
             var exitMenuItem = new ToolStripMenuItem("Exit", null, OnExitClick);
 
             #endregion
@@ -52,6 +54,7 @@ namespace DTEConverter
             var contextMenuStrip = new ContextMenuStrip();
             contextMenuStrip.Items.Add(translateImage);
             contextMenuStrip.Items.Add(translateSnip);
+            contextMenuStrip.Items.Add(translateSnipSingleWordMode);
             contextMenuStrip.Items.Add(exitMenuItem);
             #endregion
 
@@ -73,6 +76,7 @@ namespace DTEConverter
         private void TranslateImage(object sender, EventArgs e)
         {
             ClearPhraseLists();
+            appMode = Mode.PHRASE;
             OpenFileDialog fileDialog = new OpenFileDialog();
             if (fileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
@@ -84,6 +88,29 @@ namespace DTEConverter
         private void TranslateSnip(object sender, EventArgs e)
         {
             ClearPhraseLists();
+            appMode = Mode.PHRASE;
+            var snip = SnippingTool.Snip();
+            if (snip != null)
+            {
+                var filePath = "C:\\tessFiles\\snip.Jpg";
+                try
+                {
+                    snip.Save(filePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+                    ExecuteReadAndTranslateFunctions(filePath);
+                    snip.Dispose();
+                    GC.Collect();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
+        }
+
+        private void TranslateSnipSingleWordMode(object sender, EventArgs e)
+        {
+            ClearPhraseLists();
+            appMode = Mode.WORD;
             var snip = SnippingTool.Snip();
             if (snip != null)
             {
@@ -124,13 +151,18 @@ namespace DTEConverter
 
                     var meanConfidence = result.GetMeanConfidence();
                     var resultText = result.GetText().Humanize();
-
-                    dutchPhraseList.Add(resultText);
-                    // use this if we want to split the sentence.
-                    //resultText.Split(null).ToList().ForEach(word =>
-                    //{
-                    //    dutchPhraseList.Add(word);
-                    //});
+                    if (appMode == Mode.PHRASE)
+                    {
+                        dutchPhraseList.Add(resultText);
+                    }
+                    else
+                    {
+                        //use this if we want to split the sentence.
+                        resultText.Split(null).ToList().ForEach(word =>
+                        {
+                            dutchPhraseList.Add(word);
+                        });
+                    }
                 }
             }
             catch (Exception exception)
@@ -203,5 +235,11 @@ namespace DTEConverter
             Application.Exit();
         }
 
+    }
+
+    internal enum Mode
+    {
+        PHRASE,
+        WORD
     }
 }
