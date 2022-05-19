@@ -34,8 +34,8 @@ namespace DTEConverter
         private static Mode appMode = Mode.PHRASE;
 
         private NotifyIcon _notifyIcon;
-        private List<string> engPhrasesList = new List<string>();
-        private List<string> dutchPhraseList = new List<string>();
+        private static List<string> engPhrasesList = new List<string>();
+        private static List<string> dutchPhraseList = new List<string>();
 
 
         public DTEContext()
@@ -90,29 +90,21 @@ namespace DTEConverter
         {
             ClearPhraseLists();
             appMode = Mode.PHRASE;
-            var snip = SnippingTool.Snip();
-            if (snip != null)
-            {
-                var filePath = "C:\\tessFiles\\snip.Jpg";
-                try
-                {
-                    snip.Save(filePath, System.Drawing.Imaging.ImageFormat.Jpeg);
-                    ExecuteReadAndTranslateFunctions(filePath);
-                    snip.Dispose();
-                    GC.Collect();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-            }
+            SnippingTool.AreaSelected += OnAreaSelected;
+            SnippingTool.Snip();
+
         }
 
         private void TranslateSnipSingleWordMode(object sender, EventArgs e)
         {
             ClearPhraseLists();
             appMode = Mode.WORD;
-            var snip = SnippingTool.Snip();
+            SnippingTool.AreaSelected += OnAreaSelected;
+            SnippingTool.Snip();
+        }
+
+        private static void ProcessSnip(Image snip)
+        {
             if (snip != null)
             {
                 var filePath = "C:\\tessFiles\\snip.Jpg";
@@ -130,7 +122,7 @@ namespace DTEConverter
             }
         }
 
-        private void ExecuteReadAndTranslateFunctions(string filePath)
+        private static void ExecuteReadAndTranslateFunctions(string filePath)
         {
             TesseractReader(filePath);
             TranslateDutchListToEnglish();
@@ -141,7 +133,7 @@ namespace DTEConverter
         // References - 
         // https://github.com/charlesw/tesseract
         // https://github.com/charlesw/tesseract-samples
-        private void TesseractReader(string filePath)
+        private static void TesseractReader(string filePath)
         {
             try
             {
@@ -193,7 +185,7 @@ namespace DTEConverter
         //    }
         //}
 
-        private void TranslateDutchListToEnglish()
+        private static void TranslateDutchListToEnglish()
         {
             try
             {
@@ -217,8 +209,16 @@ namespace DTEConverter
             }
         }
 
+        private static void OnAreaSelected(object sender, EventArgs e)
+        {
+            var snip = SnippingTool.Image;
+            ProcessSnip(snip);
+            snip.Dispose();
+            GC.Collect();
+        }
 
-        private void ShowTranslatedText()
+
+        private static void ShowTranslatedText()
         {
             TranslatedTextForm translatedTextForm = new TranslatedTextForm(dutchPhraseList, engPhrasesList);
             translatedTextForm.Show();
